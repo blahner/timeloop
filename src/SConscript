@@ -45,6 +45,7 @@ if GetOption('link_static'):
 
 env.Append(LINKFLAGS = ['-std=c++11', '-static-libgcc', '-static-libstdc++', '-pthread'])
 env.Append(LIBS = ['config++', 'yaml-cpp', 'ncurses'])
+env.Append(LIBS = ['isl', 'barvinok', 'ntl', 'pthread', 'polylibgmp'])
 
 if GetOption('link_static'):
     print("Using static linking.")
@@ -84,6 +85,16 @@ if "NCURSESPATH" in os.environ:
     env.Append(LIBPATH = [NCURSESPATH + '/lib'])
     env.Append(CPPFLAGS = ['-I' + NCURSESPATH + '/include'])
 
+if "BARVINOKPATH" in os.environ:
+    BARVINOKPATH = os.environ["BARVINOKPATH"]
+    env.Append(LIBPATH = [BARVINOKPATH + '/lib'])
+    env.Append(CPPFLAGS = ['-I' + BARVINOKPATH + '/include'])
+
+if "NTLPATH" in os.environ:
+    NTLPATH = os.environ["NTLPATH"]
+    env.Append(LIBPATH = [NTLPATH + '/lib'])
+    env.Append(CPPFLAGS = ['-I' + NTLPATH + '/include'])
+
 if GetOption('use_accelergy'):
     env["CPPDEFINES"] += [('USE_ACCELERGY')]
 
@@ -100,6 +111,7 @@ loop-analysis/tiling.cpp
 loop-analysis/nest-analysis.cpp
 loop-analysis/operation-type.cpp
 loop-analysis/aahr-carve.cpp
+loop-analysis/point-set-isl.cpp
 pat/pat.cpp
 mapping/loop.cpp
 mapping/nest.cpp

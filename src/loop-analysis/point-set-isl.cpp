@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,44 +25,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include <isl/set.h>
 
-#include <cassert>
-
-#define POINT_SET_GENERIC_SLOW 1
-#define POINT_SET_GENERIC_FAST 2
-#define POINT_SET_4D           3
-#define POINT_SET_AAHR         4
-#define POINT_SET_AAHR_SET     5
-#define POINT_SET_ISL          6
-
-#define POINT_SET_IMPL POINT_SET_ISL
-
-#if POINT_SET_IMPL == POINT_SET_ISL
 #include "point-set-isl.hpp"
-typedef ISLPointSet PointSet;
 
-#elif POINT_SET_IMPL == POINT_SET_AAHR_SET
-#include "point-set-aahr-set.hpp"
-typedef AAHRSet PointSet;
-
-#elif POINT_SET_IMPL == POINT_SET_AAHR
-#include "point-set-aahr.hpp"
-typedef AxisAlignedHyperRectangle PointSet;
-
-#elif POINT_SET_IMPL == POINT_SET_GENERIC_SLOW
-#error fix API error with PointSetGenericSlow
-#include "point-set-generic-slow.hpp"
-typedef PointSetGenericSlow PointSet;
-
-#elif POINT_SET_IMPL == POINT_SET_4D
-#error fix API error with PointSet4D
-#include "point-set-4d.hpp"
-
-#elif POINT_SET_IMPL == POINT_SET_GENERIC_FAST
-#error fix API error with PointSetGenericFast
-#include "point-set-generic-fast.hpp"
-
-#else
-#error illegal point set implementation
-#endif
+isl_ctx* ISLPointSet::context = isl_ctx_alloc();
+isl_printer* ISLPointSet::console = isl_printer_to_file(ISLPointSet::context, stdout);

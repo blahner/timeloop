@@ -48,7 +48,7 @@ extern bool gTerminateEval;
 
 bool gEnableLinkTransfers = (getenv("TIMELOOP_DISABLE_LINK_TRANSFERS") == NULL);
 bool gExtrapolateUniformTemporal = true;
-bool gExtrapolateUniformSpatial = (getenv("TIMELOOP_DISABLE_SPATIAL_EXTRAPOLATION") == NULL);
+bool gExtrapolateUniformSpatial = false; // (getenv("TIMELOOP_DISABLE_SPATIAL_EXTRAPOLATION") == NULL);
 
 namespace analysis
 {
