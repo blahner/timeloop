@@ -154,7 +154,16 @@ class ISLPointSet
 
   std::size_t size() const
   {
-    isl_pw_qpolynomial* cardinality = isl_set_card(isl_set_copy(set_));
+    isl_set* copy = isl_set_copy(set_);
+
+    // Unfortunately, barvinok does not appear to be thread-safe. Even though
+    // we have per-thread context management, we need to wrap this call
+    // with a mutex, which is unfortunate because this call is the most
+    // expensive step in the entire execution.
+    mutex.lock();    
+    isl_pw_qpolynomial* cardinality = isl_set_card(copy);
+    mutex.unlock();
+
     isl_size num_pieces = isl_pw_qpolynomial_n_piece(cardinality);
 
     ASSERT(num_pieces <= 1);
