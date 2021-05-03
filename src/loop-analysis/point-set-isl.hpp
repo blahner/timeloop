@@ -30,15 +30,17 @@
 #include <isl/space.h>
 #include <isl/set.h>
 #include <barvinok/isl.h>
+#include <unordered_map>
+#include <mutex>
 
 #include "point-set-aahr.hpp"
 
 class ISLPointSet
 {
  protected:
-  // FIXME: these static members break multi-threading.
-  static isl_ctx* context;
-  static isl_printer* console;
+  static std::mutex mutex;
+  static std::unordered_map<pthread_t, isl_ctx*> contexts;
+  static std::unordered_map<pthread_t, isl_printer*> consoles;
 
   std::uint32_t order_;
   isl_set* set_;
@@ -51,16 +53,37 @@ class ISLPointSet
   isl_point* ToISL(const Point p)
   {
     auto order = p.Order();
-    isl_space* space = isl_space_set_alloc(context, 0, order);
+    isl_space* space = isl_space_set_alloc(Context(), 0, order);
     isl_point* point = isl_point_zero(space);
 
     for (unsigned dim = 0; dim < order; dim++)
     {
-      isl_val* v = isl_val_int_from_si(context, p[dim]);
+      isl_val* v = isl_val_int_from_si(Context(), p[dim]);
       point = isl_point_set_coordinate_val(point, isl_dim_set, dim, v);
     }
 
     return point;
+  }
+
+  // Get the thread-local ISL context.
+  isl_ctx* Context()
+  {
+    mutex.lock();
+    auto thread_id = pthread_self();
+    isl_ctx* retval;
+    auto it = contexts.find(thread_id);
+    if (it == contexts.end())
+    {
+      retval = isl_ctx_alloc();
+      contexts[thread_id] = retval;
+      consoles[thread_id] = isl_printer_to_file(retval, stdout);
+    }
+    else
+    {
+      retval = it->second;
+    }
+    mutex.unlock();
+    return retval;
   }
 
  public:
@@ -76,9 +99,7 @@ class ISLPointSet
   ISLPointSet(std::uint32_t order) :
       order_(order)
   {
-    // if (context == nullptr)
-    //   context = isl_ctx_alloc();
-    isl_space* space = isl_space_set_alloc(context, 0, order);
+    isl_space* space = isl_space_set_alloc(Context(), 0, order);
     set_ = isl_set_empty(space);
   }
 
@@ -103,28 +124,6 @@ class ISLPointSet
     Point incl_max = max;
     incl_max.IncrementAllDimensions(-1);
     set_ = isl_set_box_from_points(ToISL(min), ToISL(incl_max));
-
-    // // Construct the string: { [i0,i1,...] : min0 <= i0 < max0 and min1 <= i1 < max1 ... }
-    // char str[256] = "{ [";
-    // for (unsigned i = 0; i < order, i++)
-    // {
-    //   char dim[8];
-    //   sprintf(dim, "i%u", i);
-    //   strcat(str, dim);
-    //   if (i != order-1)
-    //     strcat(str, "] :");
-    // }
-    // for (unsigned i = 0; i < order, i++)
-    // {
-    //   char range[32];
-    //   sprintf(range, " %d <= i%u < %d ", min[i], i, max[i]);
-    //   strcat(str, range);
-    //   if (i != order-1)
-    //     strcat(str, "and");
-    // }
-    // strcat(str, "}");
-
-    // set_ = isl_set_read_from_str(context, str);
   }
 
   ISLPointSet(const ISLPointSet& a) :
@@ -195,7 +194,7 @@ class ISLPointSet
   {
     if (set_ != nullptr)
       isl_set_free(set_);
-    isl_space* space = isl_space_set_alloc(context, 0, order_);
+    isl_space* space = isl_space_set_alloc(Context(), 0, order_);
     set_ = isl_set_empty(space);
   }
 
@@ -235,6 +234,8 @@ class ISLPointSet
   void Print(std::ostream& out = std::cout) const
   {
     (void) out;
-    console = isl_printer_print_set(console, set_);
+    mutex.lock();
+    consoles.at(pthread_self()) = isl_printer_print_set(consoles.at(pthread_self()), set_);
+    mutex.unlock();
   }
 };

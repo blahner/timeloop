@@ -29,5 +29,9 @@
 
 #include "point-set-isl.hpp"
 
-isl_ctx* ISLPointSet::context = isl_ctx_alloc();
-isl_printer* ISLPointSet::console = isl_printer_to_file(ISLPointSet::context, stdout);
+std::mutex ISLPointSet::mutex;
+std::unordered_map<pthread_t, isl_ctx*> ISLPointSet::contexts;
+std::unordered_map<pthread_t, isl_printer*> ISLPointSet::consoles;
+
+//isl_ctx* ISLPointSet::context = isl_ctx_alloc();
+//isl_printer* ISLPointSet::console = isl_printer_to_file(ISLPointSet::context, stdout);
