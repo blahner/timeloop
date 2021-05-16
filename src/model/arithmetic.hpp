@@ -239,7 +239,7 @@ class ArithmeticUnits : public Level
       //     energy_ *= data_movement_info[d].tile_density.GetAverageDensity();
       // }
       energy_ = 0;
-      int op_accesses;
+      std::uint64_t op_accesses;
       std::string op_name;
 
       // find the static correspondence between timeloop action name and ERT action names
